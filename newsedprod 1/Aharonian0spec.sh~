@@ -1,0 +1,6 @@
+gnuplot<<EOF
+set ylabel 'E_{/Symbol g}^{2} dN/dE_{/Symbol g} (erg cm^{-2} s^{-1})'
+set xlabel 'E_{/Symbol g} (TeV)'
+
+plot 'OUTPUT/Aharonianspec_ICprimary.txt' u 1:6 w lines title 'CMB', 'OUTPUT/Aharonianspec_ICRprimary.txt' u 1:6 w lines title 'FIR', 'Ahaspec24ICCMB.dat' u 1:2 notitle, 'Ahaspec24ICFIR.dat' u 1:2 notitle
+EOF

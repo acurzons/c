@@ -1,0 +1,8 @@
+spectratypeproton=powerlawcutoff
+spectrum1=2.0
+expspectrum=1.0
+EMIN=1E-7
+EMAX=5000
+Ecutoff=100.0
+
+

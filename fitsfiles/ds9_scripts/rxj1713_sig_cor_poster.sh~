@@ -1,0 +1,27 @@
+ds9 ../rxj1713_sig_cor.fits \
+-cmap color \
+-colorbar no \
+-contour load ../../DS9/hess_7_16_27.ctr green 2 no \
+-crop +17:13:44.0514 -39:47:13.886 98 98 wcs fk5 arcmin \
+-grid yes \
+-grid system wcs \
+-grid sky fk5 \
+-grid skyformat degrees \
+-grid type publication \
+-grid type axes exterior \
+-grid type numerics interior \
+-grid view grid no \
+-grid view axes yes \
+-grid view title no \
+-grid format1 d.1 \
+-grid format2 d.1 \
+-grid numerics color white \
+-grid numerics gap2 6 \
+-grid grid gap1 0.6 \
+-grid grid gap2 0.6 \
+-grid labels gap2 3 \
+-zoom to fit \
+-width 458 \
+-height 434 \
+-saveimage eps rxj1713_sig_cor_poster.ps
+

@@ -1,0 +1,15 @@
+type=continuous
+Energyrate=1e37
+evolution=yes
+escape=no
+Efractionproton=0.0
+distance=1000
+size=2.0
+density=1
+Bfield=100.0
+TempIR=100
+EnIR=0.05
+Tempopt=5000
+Enopt=0.5
+time=1e4
+pulsar=no

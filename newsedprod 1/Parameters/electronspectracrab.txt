@@ -1,0 +1,8 @@
+spectratypeelectron=brokenpowerlawcutoff
+spectrum1=1.5
+spectrum2=2.5
+expspectrum=1.0
+EMIN=1E-7
+EMAX=5000
+Ebreak=0.2
+Ecutoff=1000

@@ -1,0 +1,14 @@
+gnuplot<<EOF
+set log xy
+ set style line 1 lt 1 lw 1 lc rgb 'blue'
+set ytics format '%.1e'
+set yrange [1E-17:1E-9]
+set xrange [1E-5:1E5]
+set ylabel 'E_{/Symbol g}^{2} dN/dE_{/Symbol g} (erg cm^{-2} s^{-1})' 
+set xlabel 'E_{/Symbol g} (TeV)'
+set term postscript enhanced color
+set output 'Domainkofinal2.ps'
+plot 'OUTPUT/japanesetest_ppgamma.txt' u 1:6 title 'p-p' w lines, 'OUTPUT/QGS_ppgamma.txt' u 1:6 title 'QGS' w lines, 'Domainkohadron.dat' u (\$1*1E-12):2 title 'Domainko', 'OUTPUT/domainkohadron_ICprimary.txt' u 1:6 title 'IC CMB' w lines
+
+
+EOF

@@ -1,0 +1,13 @@
+type=impulsive
+Energy=1.0E48
+evolution=no
+escape=no
+Efractionproton=0.0
+distance=1000.0
+size=1.0
+density=100.0
+Bfield=3.0
+TempIR=230.0
+EnIR=0.27
+time=10000
+

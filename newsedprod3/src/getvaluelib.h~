@@ -1,0 +1,6 @@
+void getlistparameters();
+struct powerlaw *getspectrumpowerlaw(FILE *infile);
+struct brokenpowerlaw *getspectrumbrokenpowerlaw(FILE *infile);
+struct powerlawcutoff *getspectrumpowerlawcutoff(FILE *infile);
+struct brokenpowerlawcutoff *getspectrumbrokenpowerlawcutoff(FILE *infile);
+struct pulsartype *getpulsarparameter(FILE *infile);

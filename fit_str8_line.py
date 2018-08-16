@@ -1,0 +1,83 @@
+import numpy as np
+from scipy.special import gamma, factorial
+from numpy.linalg import inv
+
+def str8_line(x, y, xerr = None, yerr = None, line_x = None, method = None, order = None):
+    if method == 1 and yerr is None:
+#        print "---------------------------Please provide error for y data--------------------------------"
+        print(ERROR)
+        return
+
+    if order is None:
+        p = 2.0 #order or number of regressors
+
+    N = len(x)
+    t = np.arange(-10,10,0.01)
+
+    #method 1
+    if method == 1:
+        S, Sx, Sy, Sxx, Sxy = 0.0, 0.0, 0.0, 0.0, 0.0
+
+        for i in range(N):
+            S += 1.0/yerr[i]**2
+            Sx += x[i]/yerr[i]**2
+            Sy += y[i]/yerr[i]**2
+            Sxx += x[i]**2 / yerr[i]**2
+            Sxy += x[i] * y[i] / yerr[i]**2
+
+        Delta = S * Sxx - Sx**2
+
+        #find a and b s.t. y = a + bx where beta[0] = a and beta[1] = b
+        beta = np.vstack([(Sxx * Sy - Sx * Sxy)/Delta, (S * Sxy - Sx * Sy) / Delta])
+        var_a = Sxx / Delta
+        var_b = S / Delta
+        cov_ab = -Sx / Delta
+        variance_matrix = np.vstack([[Sxx / Delta, -Sx / Delta], [-Sx / Delta, S / Delta]])
+
+
+        #find confidence bands
+        if line_x is not None:
+            var_y = variance_matrix[0,0] +  line_x**2 * variance_matrix[1,1] + 2.0 * line_x * variance_matrix[1,0]
+
+
+    #Least squares regression (method 2) https://en.wikipedia.org/wiki/Ordinary_least_squares#Simple_regression_model
+    else:
+        X = np.vstack([np.ones(len(x)), x]).T
+        beta = inv(np.matmul(X.T, X))
+        beta = np.matmul(beta, X.T)
+        beta = np.matmul(beta, y)
+
+        yhat = np.matmul(X, beta)
+        residuals = y - yhat
+
+        red_chi_square = np.matmul(residuals.T, residuals) / (N - p)
+
+        variance_matrix = red_chi_square * inv(np.matmul(X.T, X))
+
+        if line_x is not None:
+            var_y = variance_matrix[0,0] +  line_x**2 * variance_matrix[1,1] + 2.0 * line_x * variance_matrix[1,0]
+
+
+    #find pearsons
+    mean_x = np.average(x)
+    mean_y = np.average(y)
+    top, bottoml, bottomr = 0.0, 0.0, 0.0
+    for i in range(N):
+        top += (x[i] - mean_x)*(y[i] - mean_y)
+        bottoml += (x[i] - mean_x)**2.0
+        bottomr += (y[i] - mean_y)**2.0
+    pearsons = top / (bottoml * bottomr)**0.5
+
+    #calculate p-value based on t-statistic and t-distribution
+    ttest = pearsons * ((N - 2.0)/(1.0 - pearsons**2))**0.5
+    nu = N - 1
+    pvalue = 0
+    for j in range(len(t) - 1):
+        if t[j] > abs(ttest):
+            pvalue += (t[j+1] - t[j]) * gamma((nu + 1.0)/2.0) / ((nu*np.pi)**0.5 * gamma(nu/2.0)) * (1.0 + t[j]**2/nu)**(-(nu +1)/2.0)
+    pvalue = 2*pvalue
+
+    if line_x is not None:
+        return (beta, variance_matrix, var_y, pearsons, pvalue)
+    else:
+        return (beta, variance_matrix, pearsons, pvalue)

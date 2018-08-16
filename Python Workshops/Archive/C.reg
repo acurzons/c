@@ -1,0 +1,14 @@
+# Region file format: DS9 version 4.1
+global color=green dashlist=8 3 width=1 font="helvetica 10 normal roman" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1
+galactic
+circle(8.6034,-0.21040278,1548") # color=blue width=2 font="times 9 bold roman" dash=1
+circle(8.3951983,0.14560333,36") # color=black width=4 font="helvetica 12 bold roman"
+#text(8.792812,0.24139942) textangle=2.91899e-06 color=blue width=2 font="helvetica 16 bold roman" text={SNR G8.7-0.1}
+point(8.8681025,-0.24920306) # point=x 12 color=blue width=4
+#text(8.7248458,-0.28667405) textangle=2.91899e-06 color=blue width=3 font="helvetica 16 bold roman" text={1720MHz OH Maser}
+circle(8.3000014,-0.099999722,149.4") # color=blue width=2 font="helvetica 9 bold roman" dash=1
+#text(8.1946356,-0.16014472) textangle=2.91899e-06 color=blue width=3 font="helvetica 16 bold roman" text={SNR 8.3-0.1}
+#text(8.3974864,0.17949085) textangle=0 color=black font="helvetica 16 bold roman" text={PSR J1803-2137}
+circle(8.3951983,0.14560333,36") # color=black width=4 font="helvetica 12 bold roman"
+#text(8.7407645,0.46926527) textangle=2.91899e-06 color=black font="helvetica 14 bold roman" text={SGPS HI}
+#text(8.754771,0.42446984) textangle=2.91899e-06 color=black font="helvetica 14 bold roman" text={8 to 26 km/s}

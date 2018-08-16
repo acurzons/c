@@ -1,0 +1,11 @@
+void electronSEDprimary();
+void electronSEDsecondary();
+double Synchrotronphotonisotropic(double Ee, double Egamma,double B);
+double blackbodydistribution(double Egamma, double T);
+double blackbodydistribution2(double Urad, double Egamma, double T);
+double inversecomptonfunction(double Ee, double Egamma, double initphotonenergy);
+void electronSEDdirac();
+void electronSEDdiractest1();
+void electronSEDdiractest2();
+void SSCgammafunction();
+double ICcrosssectionthompson(double Ee,double Egamma,double energyinit);

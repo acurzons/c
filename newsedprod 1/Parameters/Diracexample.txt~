@@ -1,0 +1,9 @@
+type=dirac
+Energy=1E48
+EDirac=100.0
+Bfield =3.0
+density =100
+distance =1000
+size =1.0
+TempIR =2.73
+EnIR =0.23

@@ -1,0 +1,43 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <gsl/gsl_machine.h>
+#include <gsl/gsl_sf_synchrotron.h>
+
+
+#define lightspeedcm 2.99792458E10 
+#define Bfield 3.0 //microGauss
+#define electronmassTeV 0.510998902E-6 // in TeV
+#define ergtoTeV 0.624150934
+#define totalenergy 1E48 //erg
+#define PLANCKcgs  6.6260755E-27 //erg s
+#define parsectocm 3.0856E+18     /* cm */
+#define echargecgs 4.8066E-10     /* statcoul  */
+#define electronenergy 1.0
+#define PI 3.14159265359
+int main(){
+  double totalsynchrotron;
+  double Egamma;
+  double dEgamma;
+  double synchrotronflux;
+  int i;
+  double x;
+  double frequency, criticalfrequency;
+  for (i=-2000;i<800;i++){
+    Egamma=pow(10,(double)i/100.0);
+    dEgamma=Egamma*(pow(10,1.0/100.0)-1);
+ 
+    /*get the frequency and critical frequency*/
+    frequency=Egamma/(ergtoTeV*PLANCKvgs);
+    criticalfrequency=3.0/(4.0*PI)*sqrt(2.0/3.0)*pow(electronenergy/electronmassTeV,2.0)*echargecgs*Bfield*1E-6*pow(lightspeedcm,2.0)/(electronmassTeV);
+    x=frequency/criticalfrequency;
+    if ((x >= 0.0) && (x<-8.0*GSL_LOG_DBL_MIN/7.0)) { 
+    Bessel=gsl_sf_synchrotron_1(x);
+    
+    if (Bessel<1E-9) Bessel=0.0;
+  }
+  else Bessel=0.0;
+
+  return 0;
+
+}

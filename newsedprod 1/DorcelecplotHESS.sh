@@ -1,0 +1,35 @@
+gnuplot<<EOF
+set log xy
+ set style line 1 lt 1 lw 1 lc rgb 'blue'
+set style line 2 lt 1 lw 1 lc rgb  'black'
+
+set ytics format '%.1e'
+set yrange [1E-16:1E-8]
+set xrange [1E-15:1E5]
+set label 1 at 1E-5,3E-9 'W_{e}=3.8x10^{48} erg'
+#set label 2 at 1E-5,3E-10 'n_{H}=50 cm^{-3}'                            
+set label 3 at 1E-5,3E-10 'electron spectra {/Symbol a}=2.0'             
+set label 4 at 1E-5,1E-9 'E_{cut}=100 TeV''
+set label 5 at 1E-5,1E-10 't_{age}=6000 yr'
+set label 6 at 1E-5,3E-11 'T_1/T_2=40/88 K'
+set label 7 at 1E-5,1E-11 'U_1/U_2=1.5/0.5 eV/cm^{-3}'
+set ylabel 'E_{/Symbol g}^{2} dN/dE_{/Symbol g} (erg cm^{-2} s^{-1})' 
+set xlabel 'E_{/Symbol g} (TeV)'
+set term postscript enhanced color
+set output 'SanoDorcelecHESS.ps'
+f(x)=(x>0.5E-9 && x<9E-9)? 1.56E-17*1.6*(x/1.6)**(-0.5):1/0
+g(x)=(x>0.5E-9 && x<9E-9)? 8.96E-16*1.6*(x/1.6)**(-0.3):1/0
+h(x)=(x>0.5E-9 && x<9E-9)? 2.66E-19*1.6*(x/1.6)**(-0.7):1/0
+
+i(x)=(x>0.2E-3 && x<200E-3)? 1.6*9.53E-13*x**(-0.05):1/0
+j(x)=(x>0.2E-3 && x<200E-3)? 1.6*7.62E-13*x**(-0.05):1/0
+k(x)=(x>0.2E-3 && x<200E-3)? 1.6*4.37E-13*x**(-0.15):1/0
+l(x)=(x>0.2E-3 && x<200E-3)? 1.6*5.46E-13*x**(-0.15):1/0
+
+ismin(x1,x2,x3,x4)=(x1<x2 && x1<x3 && x1<x4  ? x1: x2<x1 && x2<x3 && x2<x4  ? x2: x3<x1 && x3<x2 && x3<x4 ? x3: x4<x1 && x4<x2 && x4<x3 ? x4:1/0)
+
+ismax(x1,x2,x3,x4)=(x1>x2 && x1>x3 && x1>x4  ? x1: x2>x1 && x2>x3 && x2>x4  ? x2: x3>x1 && x3>x2 && x3>x4 ? x3: x4>x1 && x4>x2 && x4>x3 ? x4:1/0)
+
+plot 'OUTPUT/SanoDorcelecHESS_syncprimary.txt' u 1:6 w lines title 'Synchrotron',  'OUTPUT/SanoDorcelecHESS_ICprimary.txt' u 1:6 w lines title 'IC CMB',  'OUTPUT/SanoDorcelecHESS_ICRprimary.txt' u 1:6 w lines title 'IC IR1', 'OUTPUT/SanoDorcelecHESS_ICOprimary.txt' u 1:6 w lines title 'IC IR2', '< paste OUTPUT/SanoDorcelecHESS_ICprimary.txt OUTPUT/SanoDorcelecHESS_ICRprimary.txt  OUTPUT/SanoDorcelecHESS_ICOprimary.txt' u 1:(\$6 +\$12 +\$18) w lines title 'IC total', 'DorC.txt' u 1:(\$2*\$1*\$1*1.6):(\$3*\$1*\$1*1.6):(\$4*\$1*\$1*1.6) with yerrorbars title 'DorC HESS' ls 1,  'DorC.txt' u 1:(valid(3)? 1/0: \$2*\$1*\$1*1.6):(0):(-0.8*\$2*\$1*\$1*1.6) w vector title '' ls 1, "<echo '3E-3 7.64E-13 1E-3 1E-2 0' " u 1:2:3:4:(\$2):(\$2) w xyerrorbars notitle ls 2, '' u 1:(\$2):(0):(-0.65*\$2) w vectors notitle ls 2, '+' using 1:(g(\$1)):(h(\$1)) w filledcurves title 'Suzaku', '+' using 1:(ismin(i(\$1),j(\$1),k(\$1),l(\$1))):(ismax(i(\$1),j(\$1),k(\$1),l(\$1))) w filledcurves ls 2 title 'Fermi E1+E3' 
+
+EOF

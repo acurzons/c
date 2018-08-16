@@ -1,0 +1,15 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+#define yeartosec 3.156e+7 //sec
+
+
+int main(int argc,char **argv){
+  double P0,P;
+  double P0dot,Pdot;
+ 
+
+
+  return 0;
+}

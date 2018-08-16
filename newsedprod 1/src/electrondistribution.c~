@@ -1,0 +1,890 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "structure.h"
+#include "constant.h"
+#include "string.h"
+#include "globalparameters.h"
+#include "electrondistributionlib.h"
+#include "coolingelectronlib.h"
+#include "protondistributionlib.h"
+#include "pulsarmisclib.h"
+
+double *getgamma1andGMINcontinuouselectron(){
+  double *gamma1GMIN;
+  gamma1GMIN=malloc(2*sizeof(double));
+   if(source->continuous->powerlawelectron!=NULL){
+     gamma1GMIN[0]=source->continuous->powerlawelectron->GMIN;
+     gamma1GMIN[1]=GMINelectron(source->continuous->powerlawelectron->GMAX);
+   }
+
+   else if(source->continuous->brokenpowerlawelectron!=NULL){
+     gamma1GMIN[0]=source->continuous->brokenpowerlawelectron->GMIN;
+     gamma1GMIN[1]=GMINelectron(source->continuous->brokenpowerlawelectron->GMAX);
+   }
+
+   else if(source->continuous->powerlawcutoffelectron!=NULL){
+     gamma1GMIN[0]=source->continuous->powerlawcutoffelectron->GMIN;
+     gamma1GMIN[1]=GMINelectron(source->continuous->powerlawcutoffelectron->GMAX);
+   }
+   
+   else if(source->continuous->brokenpowerlawcutoffelectron!=NULL){
+     gamma1GMIN[0]=source->continuous->brokenpowerlawcutoffelectron->GMIN;
+     gamma1GMIN[1]=GMINelectron(source->continuous->brokenpowerlawcutoffelectron->GMAX);
+   }
+
+   return gamma1GMIN;
+}
+
+double *electronGMINGMAX(){
+  double *GMINMAX;
+  GMINMAX=malloc(2*sizeof(double));
+  if(source->continuous!=NULL){
+    if(source->continuous->powerlawelectron!=NULL){
+      if(strcmp(source->continuous->evolution,"yes")==0){
+	GMINMAX[0]=GMINelectron(source->continuous->powerlawelectron->GMIN);
+      }
+      else GMINMAX[0]=source->continuous->powerlawelectron->GMIN;
+      GMINMAX[1]=source->continuous->powerlawelectron->GMAX;
+      
+    }
+   else if(source->continuous->brokenpowerlawelectron!=NULL){
+     if(strcmp(source->continuous->evolution,"yes")==0){
+	GMINMAX[0]=GMINelectron(source->continuous->brokenpowerlawelectron->GMIN);
+      }
+     else GMINMAX[0]=source->continuous->brokenpowerlawelectron->GMIN;
+      GMINMAX[1]=source->continuous->brokenpowerlawelectron->GMAX;
+     
+   }
+   else if(source->continuous->powerlawcutoffelectron!=NULL){
+     if(strcmp(source->continuous->evolution,"yes")==0){
+       GMINMAX[0]=GMINelectron(source->continuous->powerlawcutoffelectron->GMIN);
+     }
+     else GMINMAX[0]=source->continuous->powerlawcutoffelectron->GMIN;
+      GMINMAX[1]=source->continuous->powerlawcutoffelectron->GMAX;
+     
+    }
+   else if(source->continuous->brokenpowerlawcutoffelectron!=NULL){
+     if(strcmp(source->continuous->evolution,"yes")==0){
+       GMINMAX[0]=GMINelectron(source->continuous->brokenpowerlawcutoffelectron->GMIN);
+      }
+     else GMINMAX[0]=source->continuous->brokenpowerlawcutoffelectron->GMIN;
+      GMINMAX[1]=source->continuous->brokenpowerlawcutoffelectron->GMAX;
+      
+   }
+  }
+
+
+
+  /*Now for the impulsive case*/
+ if(source->impulsive!=NULL){
+    if(source->impulsive->powerlawelectron!=NULL){
+      if(strcmp(source->impulsive->evolution,"yes")==0){
+	GMINMAX[0]=GMINelectron(source->impulsive->powerlawelectron->GMIN);
+	GMINMAX[1]=GMINelectron(source->impulsive->powerlawelectron->GMAX);
+      }
+      else {
+	GMINMAX[0]=source->impulsive->powerlawelectron->GMIN;
+	GMINMAX[1]=source->impulsive->powerlawelectron->GMAX;
+      }
+    }
+    
+    else if(source->impulsive->brokenpowerlawelectron!=NULL){
+     if(strcmp(source->impulsive->evolution,"yes")==0){
+	GMINMAX[0]=GMINelectron(source->impulsive->brokenpowerlawelectron->GMIN);
+	GMINMAX[1]=GMINelectron(source->impulsive->brokenpowerlawelectron->GMAX);
+      }
+     else {
+       GMINMAX[0]=source->impulsive->brokenpowerlawelectron->GMIN;
+       GMINMAX[1]=source->impulsive->brokenpowerlawelectron->GMAX;
+     }
+    }
+
+    else if(source->impulsive->powerlawcutoffelectron!=NULL){
+     if(strcmp(source->impulsive->evolution,"yes")==0){
+       GMINMAX[0]=GMINelectron(source->impulsive->powerlawcutoffelectron->GMIN);
+       GMINMAX[1]=GMINelectron(source->impulsive->powerlawcutoffelectron->GMAX);
+     }
+     else {
+       GMINMAX[0]=source->impulsive->powerlawcutoffelectron->GMIN;
+       GMINMAX[1]=source->impulsive->powerlawcutoffelectron->GMAX;
+     }
+     
+    }
+   
+    else if(source->impulsive->brokenpowerlawcutoffelectron!=NULL){
+     if(strcmp(source->impulsive->evolution,"yes")==0){
+       GMINMAX[0]=GMINelectron(source->impulsive->brokenpowerlawcutoffelectron->GMIN);
+       GMINMAX[1]=GMINelectron(source->impulsive->brokenpowerlawcutoffelectron->GMAX);
+      }
+     else {
+       GMINMAX[0]=source->impulsive->brokenpowerlawcutoffelectron->GMIN;
+       GMINMAX[1]=source->impulsive->brokenpowerlawcutoffelectron->GMAX;
+     }
+   }
+ }
+
+ return GMINMAX;
+}
+
+void constantelectrondistribution(){
+  /* GET the electronsize*/
+  int i;
+  double normalisation;
+  double alpha,beta,delta;
+  double Ebreak,Ecutoff;
+  int electronsize;
+  double *GMINMAX;
+  /*POSSIBLE IMPLEMENTATION OF THE ESCAPE OPTION FOR NON COOLING SCENARIOS*/
+  GMINMAX=electronGMINGMAX();
+  printf("GMINelectron=%.3e GMAXelectron=%.3e\n",GMINMAX[0],GMINMAX[1]);
+  printf("EMin= %.3e Emax= %.3e\n",GMINMAX[0]*electronmassTeV,GMINMAX[1]*electronmassTeV);
+  electronsize=(int)(log10(GMINMAX[1])-log10(GMINMAX[0]))*100.0/STEP+1; 
+   printf("electronsize =%d\n",electronsize);
+
+  electronarraysize=electronsize; //pass into the global variable
+  /*initialize the electrondistribution to a double array*/
+  electrondistribution=malloc(2*sizeof(double*));
+  electrondistribution[0]=malloc(electronsize*sizeof(double));
+  electrondistribution[1]=malloc(electronsize*sizeof(double));
+  /*initialisation of the electrondistribution array*/
+  for(i=0;i<electronsize;i++){
+    electrondistribution[0][i]=0;
+    electrondistribution[1][i]=0;
+  }
+ 
+  /*Now we need to get the normalisation*/
+  /*Case 1 continuous*/
+  if(source->continuous!=NULL){
+  normalisation=normalisationelectroncontinuous(source->continuous->time);
+  for(i=0;i<electronsize;i++){
+    electrondistribution[0][i]=GMINMAX[0]*pow(10,(i*STEP)/100.0);
+  if(source->continuous->powerlawelectron!=NULL){
+    alpha=source->continuous->powerlawelectron->inp1;
+    electrondistribution[1][i]=normalisation*pow(electrondistribution[0][i]*electronmassTeV,-alpha)*source->continuous->time;
+  }
+  else if(source->continuous->brokenpowerlawelectron!=NULL){
+    alpha=source->continuous->brokenpowerlawelectron->inp1;
+    beta=source->continuous->brokenpowerlawelectron->inp2;
+    Ebreak=source->continuous->brokenpowerlawelectron->Ebreak;
+    if(electrondistribution[0][i]*electronmassTeV<Ebreak) electrondistribution[1][i]=normalisation*pow(electrondistribution[0][i]*electronmassTeV/Ebreak,-alpha)*source->continuous->time;
+    else electrondistribution[1][i]=normalisation*pow(electrondistribution[0][i]*electronmassTeV/Ebreak,-beta)*source->continuous->time;
+  } 
+  else if(source->continuous->powerlawcutoffelectron!=NULL){
+  alpha=source->continuous->powerlawcutoffelectron->inp1;
+  beta=source->continuous->powerlawcutoffelectron->expinp;
+  Ecutoff=source->continuous->powerlawcutoffelectron->Ecutoff;
+  electrondistribution[1][i]=normalisation*pow(electrondistribution[0][i]*electronmassTeV,-alpha)*exp(-pow(electrondistribution[0][i]*electronmassTeV/Ecutoff,beta))*source->continuous->time;
+  }
+
+  else if(source->continuous->brokenpowerlawcutoffelectron!=NULL){
+    alpha=source->continuous->brokenpowerlawcutoffelectron->inp1;
+    beta=source->continuous->brokenpowerlawcutoffelectron->inp2;
+    delta=source->continuous->brokenpowerlawcutoffelectron->expinp;
+    Ebreak=source->continuous->brokenpowerlawcutoffelectron->Ebreak;
+    Ecutoff=source->continuous->brokenpowerlawcutoffelectron->Ecutoff;
+    if(electrondistribution[0][i]*electronmassTeV<Ebreak) electrondistribution[1][i]=normalisation*pow(electrondistribution[0][i]*electronmassTeV/Ebreak,-alpha)*exp(-pow(electrondistribution[0][i]*electronmassTeV/Ecutoff,delta))*source->continuous->time;
+    else electrondistribution[1][i]=normalisation*pow(electrondistribution[0][i]*electronmassTeV/Ebreak,-beta)*exp(-pow(electrondistribution[0][i]*electronmassTeV/Ecutoff,delta))*source->continuous->time;
+  }
+
+  }
+
+  }
+
+  /*Casel 2 impulsive*/
+  else if (source->impulsive!=NULL){
+    normalisation=normalisationelectronimpulsive();
+  for(i=0;i<electronsize;i++){
+    electrondistribution[0][i]=GMINMAX[0]*pow(10,(double)(i*STEP)/100.0);
+  if(source->impulsive->powerlawelectron!=NULL){
+    alpha=source->impulsive->powerlawelectron->inp1;
+    electrondistribution[1][i]=normalisation*pow(electrondistribution[0][i]*electronmassTeV,-alpha);
+  }
+  else if(source->impulsive->brokenpowerlawelectron!=NULL){
+    alpha=source->impulsive->brokenpowerlawelectron->inp1;
+    beta=source->impulsive->brokenpowerlawelectron->inp2;
+    Ebreak=source->impulsive->brokenpowerlawelectron->Ebreak;
+    if(electrondistribution[0][i]*electronmassTeV<Ebreak) electrondistribution[1][i]=normalisation*pow(electrondistribution[0][i]*electronmassTeV/Ebreak,-alpha);
+    else electrondistribution[1][i]=normalisation*pow(electrondistribution[0][i]*electronmassTeV/Ebreak,-beta);
+  } 
+  else if(source->impulsive->powerlawcutoffelectron!=NULL){
+  alpha=source->impulsive->powerlawcutoffelectron->inp1;
+  beta=source->impulsive->powerlawcutoffelectron->expinp;
+  Ecutoff=source->impulsive->powerlawcutoffelectron->Ecutoff;
+  electrondistribution[1][i]=normalisation*pow(electrondistribution[0][i]*electronmassTeV,-alpha)*exp(-pow(electrondistribution[0][i]*electronmassTeV/Ecutoff,beta));
+  }
+
+  else if(source->impulsive->brokenpowerlawcutoffelectron!=NULL){
+    alpha=source->impulsive->brokenpowerlawcutoffelectron->inp1;
+    beta=source->impulsive->brokenpowerlawcutoffelectron->inp2;
+    delta=source->impulsive->brokenpowerlawcutoffelectron->expinp;
+    Ebreak=source->impulsive->brokenpowerlawcutoffelectron->Ebreak;
+    Ecutoff=source->impulsive->brokenpowerlawcutoffelectron->Ecutoff;
+    if(electrondistribution[0][i]*electronmassTeV<Ebreak) electrondistribution[1][i]=normalisation*pow(electrondistribution[0][i]*electronmassTeV/Ebreak,-alpha)*exp(-pow(electrondistribution[0][i]*electronmassTeV/Ecutoff,delta));
+    else electrondistribution[1][i]=normalisation*pow(electrondistribution[0][i]*electronmassTeV/Ebreak,-beta)*exp(-pow(electrondistribution[0][i]*electronmassTeV/Ecutoff,delta));
+  }
+  //printf("electron[1][%d]=%.3e\n",i,electrondistribution[1][i]);
+  }
+
+
+  }
+
+
+  
+}
+  
+
+
+
+  
+ 
+  
+
+
+
+void diracelectrondistribution(){
+  int i;
+  double normalisation;
+  /*This function gives the electron dirac distribution*/
+  electrondistribution=malloc(2*sizeof(double*));
+  for(i=0;i<2;i++){
+  electrondistribution[i]=malloc(sizeof(double));
+  }
+  normalisation=normalisationelectrondirac();
+
+  electrondistribution[0][0]=source->dirac->Edirac/electronmassTeV;
+  //electrondistribution[0][0]=source->dirac->Edirac;
+ electrondistribution[1][0]=normalisation;
+  printf("Ee dirac= %.2e Ee flux= %.3e \n",electrondistribution[0][0],electrondistribution[1][0]);
+
+}
+
+
+
+
+
+
+
+
+double normalisationelectroncontinuous(double time){
+  double tot=0.0;
+  double alpha,beta,delta;// The spectrum index
+  double Ebreak,Ecutoff;
+  int i;
+  double gamma,dgamma;
+  double normalisation;
+  double age;
+  if (source->continuous!=NULL) age=source->continuous->time;
+  else if (source->impulsive!=NULL) age=source->impulsive->time;
+
+
+   if (strcmp(source->continuous->spectratypeelectron,"powerlaw")==0){
+     alpha=source->continuous->powerlawelectron->inp1;
+     for(i=0;i<log10(source->continuous->powerlawelectron->GMAX)*100;i++){
+       gamma=pow(10,(double)i/100.0);
+       dgamma=gamma*(pow(10,1.0/100.0)-1);
+       tot +=pow(electronmassTeV*gamma,-alpha+1.0)*dgamma*electronmassTeV;
+     }
+   }
+
+  else if (strcmp(source->continuous->spectratypeelectron,"brokenpowerlaw")==0){
+    alpha=source->continuous->brokenpowerlawelectron->inp1;
+    beta=source->continuous->brokenpowerlawelectron->inp2;
+    Ebreak=source->continuous->brokenpowerlawelectron->Ebreak;
+    for(i=0;i<log10(source->continuous->brokenpowerlawelectron->GMAX)*100;i++){
+       gamma=pow(10,(double)i/100.0);
+       dgamma=gamma*(pow(10,1.0/100.0)-1);
+       if(gamma*electronmassTeV<Ebreak) tot +=pow(electronmassTeV*gamma/Ebreak,-alpha+1)*Ebreak*dgamma*electronmassTeV;
+       else tot +=pow(electronmassTeV*gamma/Ebreak,-beta+1)*Ebreak*dgamma*electronmassTeV;
+     }
+  }
+
+   if (strcmp(source->continuous->spectratypeelectron,"powerlawcutoff")==0){
+     alpha=source->continuous->powerlawcutoffelectron->inp1;
+     beta=source->continuous->powerlawcutoffelectron->expinp;
+     Ecutoff=source->continuous->powerlawcutoffelectron->Ecutoff;
+     for(i=0;i<log10(source->continuous->powerlawcutoffelectron->GMAX)*100;i++){
+       gamma=pow(10,(double)i/100.0);
+       dgamma=gamma*(pow(10,1.0/100.0)-1);
+       tot +=pow(electronmassTeV*gamma,-alpha+1)*exp(-pow(electronmassTeV*gamma/Ecutoff,beta))*dgamma*electronmassTeV;
+     }
+   }
+
+
+   if (strcmp(source->continuous->spectratypeelectron,"brokenpowerlawcutoff")==0){
+     alpha=source->continuous->brokenpowerlawcutoffelectron->inp1;
+     beta=source->continuous->brokenpowerlawcutoffelectron->inp2;
+     delta=source->continuous->brokenpowerlawcutoffelectron->expinp;
+     Ebreak=source->continuous->brokenpowerlawcutoffelectron->Ebreak;
+     Ecutoff=source->continuous->brokenpowerlawcutoffelectron->Ecutoff;
+     for(i=0;i<log10(source->continuous->brokenpowerlawcutoffelectron->GMAX)*100;i++){
+       gamma=pow(10,(double)i/100.0);
+       dgamma=gamma*(pow(10,1.0/100.0)-1);
+       if(gamma*electronmassTeV<Ebreak) tot +=pow(electronmassTeV*gamma/Ebreak,-alpha+1)*Ebreak*exp(-pow(electronmassTeV*gamma/Ecutoff,delta))*dgamma*electronmassTeV;
+       else tot +=pow(electronmassTeV*gamma/Ebreak,-beta+1)*Ebreak*exp(-pow(electronmassTeV*gamma/Ecutoff,delta))*dgamma*electronmassTeV;
+     }
+   }
+   if(source->continuous->pulsartype!=NULL){
+     normalisation=pulsarenergy(age-time)*ergtoTeV*(1-source->continuous->Efractionproton)*(1-source->continuous->pulsartype->fractionmag)/tot;
+   }
+
+   else normalisation=source->continuous->L0*ergtoTeV*(1-source->continuous->Efractionproton)/tot;
+   return normalisation;
+  
+}
+
+
+
+
+double normalisationelectronimpulsive(){
+double tot=0.0;
+  double alpha,beta,delta;// The spectrum index
+  double Ecutoff,Ebreak;
+  double dgamma;
+  int i;
+  double gamma;
+  double normalisation;
+   if (strcmp(source->impulsive->spectratypeelectron,"powerlaw")==0){
+     alpha=source->impulsive->powerlawelectron->inp1;
+     for(i=0;i<log10(source->impulsive->powerlawelectron->GMAX)*100;i++){
+       gamma=pow(10,(double)i/100.0);
+       dgamma=gamma*(pow(10,1.0/100.0)-1);
+       tot +=pow(electronmassTeV*gamma,-alpha+1.0)*dgamma*electronmassTeV;
+     }
+   }
+
+  else if (strcmp(source->impulsive->spectratypeelectron,"brokenpowerlaw")==0){
+    alpha=source->impulsive->brokenpowerlawelectron->inp1;
+    beta=source->impulsive->brokenpowerlawelectron->inp2;
+    Ebreak=source->impulsive->brokenpowerlawelectron->Ebreak;
+    for(i=0;i<log10(source->impulsive->brokenpowerlawelectron->GMAX)*100;i++){
+       gamma=pow(10,(double)i/100.0);
+       dgamma=gamma*(pow(10,1.0/100.0)-1);
+       if(gamma*electronmassTeV<Ebreak) tot +=pow(electronmassTeV*gamma/Ebreak,-alpha+1)*Ebreak*dgamma*electronmassTeV;
+       else tot +=pow(electronmassTeV*gamma/Ebreak,-beta+1)*Ebreak*dgamma*electronmassTeV;
+     }
+  }
+
+   if (strcmp(source->impulsive->spectratypeelectron,"powerlawcutoff")==0){
+     alpha=source->impulsive->powerlawcutoffelectron->inp1;
+     beta=source->impulsive->powerlawcutoffelectron->expinp;
+     Ecutoff=source->impulsive->powerlawcutoffelectron->Ecutoff;
+     for(i=0;i<log10(source->impulsive->powerlawcutoffelectron->GMAX)*100;i++){
+       gamma=pow(10,(double)i/100.0);
+       dgamma=gamma*(pow(10,1.0/100.0)-1);
+       tot +=pow(electronmassTeV*gamma,-alpha+1)*exp(-pow(electronmassTeV*gamma/Ecutoff,beta))*electronmassTeV*dgamma;
+     }
+   }
+
+
+   if (strcmp(source->impulsive->spectratypeelectron,"brokenpowerlawcutoff")==0){
+     alpha=source->impulsive->brokenpowerlawcutoffelectron->inp1;
+     beta=source->impulsive->brokenpowerlawcutoffelectron->inp2;
+     delta=source->impulsive->brokenpowerlawcutoffelectron->expinp;
+     Ebreak=source->impulsive->brokenpowerlawcutoffelectron->Ebreak;
+     Ecutoff=source->impulsive->brokenpowerlawcutoffelectron->Ecutoff;
+     for(i=0;i<log10(source->impulsive->brokenpowerlawcutoffelectron->GMAX)*100;i++){
+       gamma=pow(10,(double)i/100.0);
+       dgamma=gamma*(pow(10,1.0/100.0)-1);
+       if(gamma*electronmassTeV<Ebreak) tot +=pow(electronmassTeV*gamma/Ebreak,-alpha+1)*Ebreak*exp(-pow(electronmassTeV*gamma/Ecutoff,delta))*dgamma*electronmassTeV;
+       else tot +=pow(electronmassTeV*gamma/Ebreak,-beta+1)*Ebreak*exp(-pow(electronmassTeV*gamma/Ecutoff,delta))*dgamma*electronmassTeV;
+     }
+   }
+   
+   normalisation=source->impulsive->E0*ergtoTeV*(1-source->impulsive->Efractionproton)/tot;
+     
+   return normalisation;
+
+
+}
+
+
+double normalisationelectrondirac(){
+  double normalisation,total;
+  /*in this function it is very brief, the distribution function resumes to a simple dirac function*/
+  total=source->dirac->Edirac;
+ 
+  normalisation=source->dirac->E0*ergtoTeV/total;
+
+  return normalisation;
+}
+
+
+
+
+
+void evolutionelectroncontinuous(){
+  /*This function takes into account the cooling effect due to non-thermal interactions */
+  int i,j;
+  double *GMINMAX; //gamma2 GMAX
+  int electronsize;
+  double *gamma1GMIN; //gamma1 GMIN
+  
+  double *tmpg0reso;
+  double normalisation;
+  double gammastart,dgamma,gammadot;
+  
+
+  double tau;
+  double dtau; // for some special case, I may need to develop explanation*/
+
+  GMINMAX=electronGMINGMAX();
+  if(GMINMAX[0]<1.0) GMINMAX[0]=1.0; // gamma must always  at least 1.0 so no need to go below that
+  gamma1GMIN=getgamma1andGMINcontinuouselectron();
+ 
+  printf("and then?\n");
+  /*the first value would be GMIN and the second value would be gamma1*/
+  electronsize=(int)((log10(GMINMAX[1])-log10(GMINMAX[0]))*100.0/STEP+1);  
+  electronarraysize=electronsize;
+  printf("gamma1=%.3e EMAX=%.3e size=%d\n",log10(GMINMAX[0]),log10(GMINMAX[1]),electronarraysize);
+ 
+  /*initialize the electrondistribution to a triple array
+ 1/ gamma
+ 2/electronflux
+ 3/gamma_0 
+ 4/resolution   */
+  electrondistribution=malloc(4*sizeof(double*));
+  for(i=0;i<4;i++){
+  electrondistribution[i]=malloc(electronsize*sizeof(double));
+  }
+  /*initialisation of the electrondistribution array*/
+  for(j=0;j<4;j++){
+  for(i=0;i<electronsize;i++){
+    electrondistribution[j][i]=0;
+  } 
+  }
+
+  /*Now onto the main topic, we start by the first case where gamma1>GMINMAX[0], -----MOST PROBABLE CASE-----*/
+  if(gamma1GMIN[0]<gamma1GMIN[1]){
+    
+    for(i=0;i<electronsize;i++){
+      electrondistribution[0][i]=GMINMAX[0]*pow(10,(double)(i*STEP)/100.0);
+      tmpg0reso=G0electron(electrondistribution[0][i],source->continuous->time);
+      electrondistribution[2][i]=tmpg0reso[0];
+      electrondistribution[3][i]=tmpg0reso[1];
+      free(tmpg0reso);
+      printf("electrondistribution[0][%d]=%.3e electrondistribution[2][%d]=%.3e\n",i,electrondistribution[0][i]*electronmassTeV,i,electrondistribution[2][i]*electronmassTeV);
+      /*case where the gamma and its G0 is the same*/
+      if(electrondistribution[2][i]==electrondistribution[0][i]){
+	dtau=source->continuous->time/500.0;
+	for (tau=0.0;tau<source->continuous->time;tau +=dtau){
+	if(strcmp(source->continuous->escape,"yes")==0){
+	   
+	  electrondistribution[1][i] +=getinitialcontinuouselectrondistribution(electrondistribution[0][i],tau)*exp(-getescapeelectroncontinuous(electrondistribution[0][i],tau))*dtau;
+	}
+	
+	else electrondistribution[1][i] +=getinitialcontinuouselectrondistribution(electrondistribution[0][i],tau)*dtau;
+	}
+	
+      
+      }
+      /*case where the resolution actually resolve g0 from gamma*/
+      else{
+       
+	/*subcase no1 : gamma2<gamma<GMIN*/
+	if((electrondistribution[0][i]>=GMINMAX[0])&&(electrondistribution[0][i]<gamma1GMIN[0])){
+	  gammastart=gamma1GMIN[0]; //start with gamma=GMIN;
+	  tau=0;  //initialise time */
+	  
+	  while (gammastart<electrondistribution[2][i]){
+	    dgamma=gammastart*(pow(10,1.0/(100*pow(10,electrondistribution[3][i])))-1);
+	   
+	    if(dgamma>electrondistribution[2][i]-gammastart) dgamma=electrondistribution[2][i]-gammastart;
+	    gammadot=coolingelectron(gammastart,tau);
+	    tau +=dgamma/gammadot;
+	    /*-----debug condition-----*/
+	   
+	    if(tau>source->continuous->time) tau=source->continuous->time;
+	    	if(strcmp(source->continuous->escape,"yes")==0){
+		  electrondistribution[1][i] +=getinitialcontinuouselectrondistribution(gammastart,tau)*exp(-getescapeelectroncontinuous(gammastart,tau))*dgamma;
+		  
+		}
+		else {
+		  electrondistribution[1][i] +=getinitialcontinuouselectrondistribution(gammastart,tau)*dgamma; 
+		}
+		gammastart +=dgamma; //gamma incrementation
+		
+	  }
+	  electrondistribution[1][i] /=coolingelectron(electrondistribution[0][i],0);
+	  
+	}
+
+	/*2nd subcase: GMIN<gamma<gamma1*/
+	
+	if((electrondistribution[0][i]>=gamma1GMIN[0])&&(electrondistribution[0][i]<gamma1GMIN[1])){
+	  gammastart=electrondistribution[0][i]; //start with gamma;
+	  tau=0;  //initialise time */
+	  while (gammastart<electrondistribution[2][i]){
+	    dgamma=gammastart*(pow(10,1.0/(100*pow(10,electrondistribution[3][i])))-1);
+	    //printf("evolution gammastart = %.3e\n",gammastart);
+	    if(dgamma>electrondistribution[2][i]-gammastart) dgamma=electrondistribution[2][i]-gammastart;
+	    gammadot=coolingelectron(gammastart,tau);
+	    tau +=dgamma/gammadot;
+	    /*-----debug condition-----*/
+	    if(tau>source->continuous->time) tau=source->continuous->time;
+	    	if(strcmp(source->continuous->escape,"yes")==0){
+		  electrondistribution[1][i] +=getinitialcontinuouselectrondistribution(gammastart,tau)*exp(-getescapeelectroncontinuous(gammastart,tau))*dgamma;
+		}
+		else {
+		  electrondistribution[1][i] +=getinitialcontinuouselectrondistribution(gammastart,tau)*dgamma; 
+		}
+		gammastart +=dgamma; //gamma incrementation
+	  }
+	  electrondistribution[1][i] /=coolingelectron(electrondistribution[0][i],0);
+	  
+	  
+	}
+	
+	/* 3rd case gamma1<gamma<GMAX*/
+	if((electrondistribution[0][i]>=gamma1GMIN[1])&&(electrondistribution[0][i]<GMINMAX[1])){
+	  gammastart=electrondistribution[0][i]; //start with gamma;
+	  tau=0;  //initialise time */
+	  while (gammastart<GMINMAX[1]){
+	    dgamma=gammastart*(pow(10,1.0/100.0)-1);
+	    
+	    if(dgamma>GMINMAX[1]-gammastart) dgamma=GMINMAX[1]-gammastart;
+	   
+	    gammadot=coolingelectron(gammastart,tau);
+	    tau +=dgamma/gammadot;
+	    /*-----debug condition-----*/
+	    if(tau>source->continuous->time) tau=source->continuous->time;
+	    if(strcmp(source->continuous->escape,"yes")==0){
+		  electrondistribution[1][i] +=getinitialcontinuouselectrondistribution(gammastart,tau)*exp(-getescapeelectroncontinuous(gammastart,tau))*dgamma;
+		}
+		else {
+		  electrondistribution[1][i] +=getinitialcontinuouselectrondistribution(gammastart,tau)*dgamma; 
+		}
+	    
+	    gammastart +=dgamma; //gamma incrementation
+	   
+	  }
+	  electrondistribution[1][i] /=coolingelectron(electrondistribution[0][i],0);
+	}
+      }
+    }
+  }
+
+      /*----END OF THE CASE WHERE gamma1>GMIN-------*/
+
+
+
+
+      /*----2nd case : MUCH LESS LIKELY gamma1<GMIN-----*/
+      else if(gamma1GMIN[1]<gamma1GMIN[0]){
+	for(i=0;i<electronsize;i++){
+      electrondistribution[0][i]=GMINMAX[0]*pow(10,(double)(i*STEP)/100.0);
+      tmpg0reso=G0electron(electrondistribution[0][i],source->continuous->time);
+      electrondistribution[2][i]=tmpg0reso[0];
+      electrondistribution[3][i]=tmpg0reso[1];
+      free(tmpg0reso);
+      
+      /*case where the gamma and its G0 is the same*/
+      if(electrondistribution[2][i]==electrondistribution[0][i]){
+	dtau=source->continuous->time/500.0;
+	for(tau=0.0;tau<source->continuous->time;tau +=dtau){
+	if(strcmp(source->continuous->escape,"yes")==0){
+	  electrondistribution[1][i] +=getinitialcontinuouselectrondistribution(electrondistribution[0][i],tau)*exp(-getescapeelectroncontinuous(electrondistribution[0][i],tau))*dtau;
+	}
+	
+	else electrondistribution[1][i] +=getinitialcontinuouselectrondistribution(electrondistribution[0][i],tau)*dtau;
+	}
+	
+      
+      }
+      /*case where the resolution actually resolve g0 from gamma*/
+      else{
+       
+	/*subcase no1 : gamma2<gamma<gamma1*/
+	if((electrondistribution[0][i]>=GMINMAX[0])&&(electrondistribution[0][i]<gamma1GMIN[1])){
+	  gammastart=gamma1GMIN[0]; //start with gamma=GMIN;
+	  tau=0;  //initialise time */
+	  while (gammastart<electrondistribution[2][i]){
+	    dgamma=gammastart*(pow(10,1.0/(100*pow(10,electrondistribution[3][i])))-1);
+	    if(dgamma>electrondistribution[2][i]-gammastart) dgamma=electrondistribution[2][i]-gammastart;
+	    gammadot=coolingelectron(gammastart,tau);
+	    tau +=dgamma/gammadot;
+	    /*-----debug condition-----*/
+	    if(tau>source->continuous->time) tau=source->continuous->time;
+	    	if(strcmp(source->continuous->escape,"yes")==0){
+		  electrondistribution[1][i] +=getinitialcontinuouselectrondistribution(gammastart,tau)*exp(-getescapeelectroncontinuous(gammastart,tau))*dgamma;
+		}
+		else {
+		  electrondistribution[1][i] +=getinitialcontinuouselectrondistribution(gammastart,tau)*dgamma; 
+		}
+		gammastart +=dgamma; //gamma incrementation
+	  }
+	  electrondistribution[1][i] /=coolingelectron(electrondistribution[0][i],0);
+	  
+	}
+
+	/*2nd subcase: gamma1<gamma<GMIN*/
+	
+	if((electrondistribution[0][i]>=gamma1GMIN[1])&&(electrondistribution[0][i]<gamma1GMIN[0])){
+	  gammastart=gamma1GMIN[0]; //start with gamma;
+	  tau=0;  //initialise time */
+	  while (gammastart<GMINMAX[1]){
+	    dgamma=gammastart*(pow(10,1.0/100.0)-1);
+	    if(dgamma>electrondistribution[2][i]-gammastart) dgamma=electrondistribution[2][i]-gammastart;
+	    gammadot=coolingelectron(gammastart,tau);
+	    tau +=dgamma/gammadot;
+	    /*-----debug condition-----*/
+	    if(tau>source->continuous->time) tau=source->continuous->time;
+	    	if(strcmp(source->continuous->escape,"yes")==0){
+		  electrondistribution[1][i] +=getinitialcontinuouselectrondistribution(gammastart,tau)*exp(-getescapeelectroncontinuous(gammastart,tau))*dgamma;
+		}
+		else {
+		  electrondistribution[1][i] +=getinitialcontinuouselectrondistribution(gammastart,tau)*dgamma; 
+		}
+		gammastart +=dgamma; //gamma incrementation
+	  }
+	  electrondistribution[1][i] /=coolingelectron(electrondistribution[0][i],0);
+	}
+	
+	/* 3rd case GMIN<gamma<GMAX*/
+	if((electrondistribution[0][i]>=gamma1GMIN[1])&&(electrondistribution[0][i]<GMINMAX[1])){
+	  gammastart=electrondistribution[0][i]; //start with gamma;
+	  tau=0;  //initialise time */
+	  while (gammastart<GMINMAX[1]){
+	    dgamma=gammastart*(pow(10,1.0/100.0)-1);
+	    if(dgamma>GMINMAX[1]-gammastart) dgamma=GMINMAX[1]-gammastart;
+	    gammadot=coolingelectron(gammastart,tau);
+	    tau +=dgamma/gammadot;
+	    /*-----debug condition-----*/
+	    if(tau>source->continuous->time) tau=source->continuous->time;
+	    if(strcmp(source->continuous->escape,"yes")==0){
+		  electrondistribution[1][i] +=getinitialcontinuouselectrondistribution(gammastart,tau)*exp(-getescapeelectroncontinuous(gammastart,tau))*dgamma;
+		}
+		else {
+		  electrondistribution[1][i] +=getinitialcontinuouselectrondistribution(gammastart,tau)*dgamma; 
+		}
+	    	gammastart +=dgamma; //gamma incrementation
+	  }
+	  electrondistribution[1][i] /=coolingelectron(electrondistribution[0][i],0);
+	}
+      }
+	}
+      }
+}
+  
+      
+
+ double getinitialcontinuouselectrondistribution(double gamma,double tau){
+  /*this function aims at determining the initial number of electron at loretz factor gamma*/
+
+
+  double alpha,beta,delta;
+  double Ebreak,Ecutoff;
+  double normalisation;
+  double electrondistribution2;
+  
+  normalisation=normalisationelectroncontinuous(tau);
+  if(source->continuous->powerlawelectron!=NULL){
+    alpha=source->continuous->powerlawelectron->inp1;
+    electrondistribution2=normalisation*pow(gamma*electronmassTeV,-alpha);
+  }
+  else if(source->continuous->brokenpowerlawelectron!=NULL){
+    alpha=source->continuous->brokenpowerlawelectron->inp1;
+    beta=source->continuous->brokenpowerlawelectron->inp2;
+    Ebreak=source->continuous->brokenpowerlawelectron->Ebreak;
+    if(gamma*electronmassTeV<Ebreak) electrondistribution2=normalisation*pow(gamma*electronmassTeV/Ebreak,-alpha);
+    else electrondistribution2=normalisation*pow(gamma*electronmassTeV/Ebreak,-beta);
+  } 
+  else if(source->continuous->powerlawcutoffelectron!=NULL){
+  alpha=source->continuous->powerlawcutoffelectron->inp1;
+  beta=source->continuous->powerlawcutoffelectron->expinp;
+  Ecutoff=source->continuous->powerlawcutoffelectron->Ecutoff;
+  electrondistribution2=normalisation*pow(gamma*electronmassTeV,-alpha)*exp(-pow(gamma*electronmassTeV/Ecutoff,beta));
+  }
+
+  else if(source->continuous->brokenpowerlawcutoffelectron!=NULL){
+    alpha=source->continuous->brokenpowerlawcutoffelectron->inp1;
+    beta=source->continuous->brokenpowerlawcutoffelectron->inp2;
+    delta=source->continuous->brokenpowerlawcutoffelectron->expinp;
+    Ebreak=source->continuous->brokenpowerlawcutoffelectron->Ebreak;
+    Ecutoff=source->continuous->brokenpowerlawcutoffelectron->Ecutoff;
+    if(gamma*electronmassTeV<Ebreak) electrondistribution2=normalisation*pow(gamma*electronmassTeV/Ebreak,-alpha)*exp(-pow(gamma*electronmassTeV/Ecutoff,delta));
+    else electrondistribution2=normalisation*pow(gamma*electronmassTeV/Ebreak,-beta)*exp(-pow(gamma*electronmassTeV/Ecutoff,delta));
+  }
+  //printf("electrondistribution2=%.3e\n",electrondistribution2);
+  return electrondistribution2;
+}
+
+
+
+
+
+double getescapeelectroncontinuous(double gamma,double tau){
+  /*This function compute the escape constant and determine the amount of particles that have escaped the system*/
+  double *tmpg0reso;
+  double *GMINMAX;
+  double escaperate;
+  double Bohmcte; //bohm constant from Manolakou et al except we use a full 3D diffusion radius instead of a radial only 1D expansion of the particles, this can be changed later on */
+  double totalescape=0.0;
+  double gammaprime=gamma;
+  double dgamma,gammadot;
+  double Bfield,size;
+  double tau2=0.0; //for dgamma/gammadot and get the B(t)
+  double dtau2;
+  if(source->continuous!=NULL){
+    Bfield=source->continuous->Bfield;
+    size=source->continuous->size;
+  }
+  else if(source->impulsive!=NULL){
+    Bfield=source->impulsive->Bfield;
+    size=source->impulsive->size;
+  }
+  Bohmcte=6*electronmassTeV*TeVtoJoules/(3*echarge*Bfield*1E-6*GausstoTesla);
+  
+  tmpg0reso=G0electron(gamma,tau);
+  //printf("gammaprimeorigin=%.3e tmpg0res0= %.f",gammaprime,tmpg0reso[1]);
+  /*case where gamma=g0*/
+  if(gamma==tmpg0reso[0]){
+    if (source->continuous->pulsartype==NULL) totalescape=Bohmcte/(pow(size*parsectocm,2))*gamma*tau;
+    else {
+      dtau2=tau/1000.0;
+      for(tau2=1*yeartosec;tau2<tau;tau2 +=dtau2){
+
+	totalescape +=Bohmcte/(pow(getsize(tau2),2))*gamma*dtau2;
+      }
+    //printf("totalescapeelectron=%.3e\n",totalescape);
+    return totalescape;
+    }
+  }
+  else {
+    if(tmpg0reso[0]>1E12) tmpg0reso[0]=1E12; //DEBUG TEST 
+    /* ---NEED TO IMPOSE CONDITION ON G0>GMAX----*/
+    while (gammaprime<tmpg0reso[0]){
+      // printf("slow time\n");
+      if (tmpg0reso[1]>=0) dgamma=gammaprime*(pow(10,1.0/(100.0*pow(10,tmpg0reso[1])))-1);
+      else dgamma=gammaprime*(pow(10,1.0/(100.0))-1);
+
+      if(dgamma>=tmpg0reso[0]-gammaprime) dgamma=tmpg0reso[0]-gammaprime;
+      gammadot=coolingelectron(gammaprime,tau2);
+      tau2 +=dgamma/gammadot;
+      if (source->continuous->pulsartype==NULL){
+	totalescape+=Bohmcte/(pow(size*parsectocm,2))*gamma/gammadot*dgamma;
+      }
+      else{
+	totalescape+=Bohmcte/(pow(getsize(tau2),2))*gamma/gammadot*dgamma;
+      }
+      gammaprime +=dgamma;
+      
+    }
+  }
+				      
+  return totalescape;
+
+}
+
+
+
+void evolutionelectronimpulsive(){
+/*This function takes into account the cooling effect due to non-thermal interactions */
+  int i,j;
+  double *GMINMAX; //gamma2 GMAX
+  int electronsize;
+  double *gamma1GMIN; //gamma1 GMIN
+  
+  double *tmpg0reso;
+  double normalisation;
+  double gammastart,dgamma;
+  
+
+ 
+  GMINMAX=electronGMINGMAX();
+  /*the first value would be GMIN and the second value would be gamma1*/
+  electronsize=(int)((log10(GMINMAX[1])-log10(GMINMAX[0]))*100.0/STEP+1);  
+  electronarraysize=electronsize;
+ 
+  /*initialize the electrondistribution to a quadruple array
+ 1/ gamma
+ 2/electronflux
+ 3/gamma_0 
+ 4/resolution   */
+  electrondistribution=malloc(4*sizeof(double*));
+  for(i=0;i<4;i++){
+  electrondistribution[i]=malloc(electronsize*sizeof(double));
+  }
+  /*initialisation of the electrondistribution array*/
+  for(j=0;j<4;j++){
+  for(i=0;i<electronsize;i++){
+    electrondistribution[j][i]=0;
+  } 
+  }
+
+  /*In this function , there is no cases as in the continuous function because the electron distribution is dependent on a dirac function only*/
+  for(i=0;i<electronsize;i++){
+    electrondistribution[0][i]=GMINMAX[0]*pow(10,(double)(i*STEP)/100.0);
+    tmpg0reso=G0electron(electrondistribution[0][i],source->impulsive->time);
+    electrondistribution[2][i]=tmpg0reso[0];
+    electrondistribution[3][i]=tmpg0reso[1];
+    free(tmpg0reso);
+    /*Now we got the escape option, we can use the continuous escape option that is still relevant to this particular case*/
+    if(strcmp(source->impulsive->escape,"yes")==0){
+      electrondistribution[1][i] =getinitialimpulsiveelectrondistribution(electrondistribution[2][i])*exp(-getescapeelectroncontinuous(electrondistribution[0][i],source->impulsive->time));
+
+    }
+    else {
+      electrondistribution[1][i] =getinitialimpulsiveelectrondistribution(electrondistribution[2][i])*dgamma; 
+      
+    }
+    electrondistribution[1][i] *=coolingelectron(electrondistribution[2][i],source->impulsive->time)/coolingelectron(electrondistribution[0][i],0);
+    printf("electrondistribution[1][%d]=%.3e\n",i,electrondistribution[1][i]);
+  }
+
+}								       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ double getinitialimpulsiveelectrondistribution(double gamma){
+  /*this function aims at determining the initial number of electron at loretz factor gamma*/
+
+
+  double alpha,beta,delta;
+  double Ebreak,Ecutoff;
+  double normalisation;
+  double electrondistribution2; //to avoid confusion with global variable*/
+  normalisation=normalisationelectronimpulsive();
+  if(source->impulsive->powerlawelectron!=NULL){
+    alpha=source->impulsive->powerlawelectron->inp1;
+    electrondistribution2=normalisation*pow(gamma*electronmassTeV,-alpha);
+  }
+  else if(source->impulsive->brokenpowerlawelectron!=NULL){
+    alpha=source->impulsive->brokenpowerlawelectron->inp1;
+    beta=source->impulsive->brokenpowerlawelectron->inp2;
+    Ebreak=source->impulsive->brokenpowerlawelectron->Ebreak;
+    if(gamma*electronmassTeV<Ebreak) electrondistribution2=normalisation*pow(gamma*electronmassTeV/Ebreak,-alpha);
+    else electrondistribution2=pow(gamma*electronmassTeV/Ebreak,-beta);
+  } 
+  else if(source->impulsive->powerlawcutoffelectron!=NULL){
+  alpha=source->impulsive->powerlawcutoffelectron->inp1;
+  beta=source->impulsive->powerlawcutoffelectron->expinp;
+  Ecutoff=source->impulsive->powerlawcutoffelectron->Ecutoff;
+  electrondistribution2=normalisation*pow(gamma*electronmassTeV,-alpha)*exp(-pow(gamma*electronmassTeV/Ecutoff,beta));
+  }
+
+  else if(source->impulsive->brokenpowerlawcutoffelectron!=NULL){
+    alpha=source->impulsive->brokenpowerlawcutoffelectron->inp1;
+    beta=source->impulsive->brokenpowerlawcutoffelectron->inp2;
+    delta=source->impulsive->brokenpowerlawcutoffelectron->expinp;
+    Ebreak=source->impulsive->brokenpowerlawcutoffelectron->Ebreak;
+    Ecutoff=source->impulsive->brokenpowerlawcutoffelectron->Ecutoff;
+    if(gamma*electronmassTeV<Ebreak) electrondistribution2=normalisation*pow(gamma*electronmassTeV/Ebreak,-alpha)*exp(-pow(gamma*electronmassTeV/Ecutoff,delta));
+    else electrondistribution2=normalisation*pow(gamma*electronmassTeV/Ebreak,-beta)*exp(-pow(gamma*electronmassTeV/Ecutoff,delta));
+  }
+
+  return electrondistribution2;
+ }

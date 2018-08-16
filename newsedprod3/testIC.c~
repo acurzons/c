@@ -1,0 +1,24 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+/*----------------------------------------------------------------------------
+TESTIC.c: this program aims at testing the different regime from the inverse compton
+
+-----------------------------------------------------------------------------*/
+
+int main(){
+  /*The program consists in injecting a monochromatic distribution of electron, the program should list*/
+
+
+}
+
+double blackbodydistribution2(double Urad, double Egamma, double T){
+  double distribution2;
+  Urad *=eVtoJoules;
+  distribution2=15*Urad/(pow(PI*BOLTZMANN*T,4))*pow(Egamma*TeVtoJoules,2)*1.0/(exp(Egamma*TeVtoJoules/(BOLTZMANN*T))-1.0);
+  distribution2 *=TeVtoJoules; //in ph cm-3 TeV-1 
+
+  return distribution2;
+}
+
+

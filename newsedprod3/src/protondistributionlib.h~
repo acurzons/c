@@ -1,0 +1,14 @@
+/*library for the protondistribution functions*/
+float *getgamma1andGMINcontinuousproton();
+float *protonGMINGMAX();
+void constantprotondistribution();
+void diracprotondistribution();
+float normalisationprotoncontinuous(float time);
+float  pulsarenergy (float time);
+float normalisationprotonimpulsive();
+float normalisationprotondirac();
+void evolutionprotoncontinuous();
+float getinitialcontinuousprotondistribution(float gamma,float tau);
+float getescapeprotoncontinuous(float gamma,float tau);
+void evolutionprotonimpulsive();
+float getinitialimpulsiveprotondistribution(float gamma);

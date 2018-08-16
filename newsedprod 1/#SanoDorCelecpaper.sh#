@@ -1,0 +1,53 @@
+TICSgnuplot<<EOF
+set log xy
+ set style line 1 lt 1 lw 2 lc rgb 'purple'
+set style line 2 lt 1 lw 2 lc rgb  'black'
+set style line 3 lt 2 lw 2 lc rgb  'blue'
+set style line 4 lt 3 lw 2 lc rgb  'blue'
+set style line 5 lt 5 lw 2 lc rgb 'blue'
+set style line 6 lt 1 lw 2 lc rgb  'purple'
+set style line 7 lt 1 lw 1 lc rgb  'red'
+set style line 8 lt 1 lw 2 lc rgb 'grey'
+set ytics format '%.1e'
+set yrange [1E-16:1E-8]
+set xrange [1E-15:1E5]
+set label 9 at 1E-14,1.5E-9 '30 DorC' font ',15'
+set label 10 at 1E-14,6.5E-10 'Leptonic ' font ',15'
+set label 11 at 1E-14,2.5E-10 'scenario' font ',15'
+set label 1 at 1E-5,3E-9 'W_{e}=3.8x10^{48} erg' font ',15'
+set label 2 at 1E-11,3E-9 'n_{H}=60 cm^{-3}'font ',15'                            
+set label 3 at 1E-5,3E-10 'Spectra {/Symbol a}_1/{/Symbol a}_2=2.0/3.4' font ',15'         
+set label 8 at 1E-5,1E-10 'E_{break}=10 TeV' font ',15'
+set label 4 at 1E-5,1E-9 'E_{cut}=100 TeV' font ',15'
+set label 5 at 1E-11,1E-9 'B=15 {/Symbol m}G'font ',15'
+set label 6 at 1E-11,3E-10 'T_1/T_2=40/88 K'font ',15'
+set label 7 at 1E-11,1E-10 'U_1/U_2=0.5/1.5 eV/cm^{-3}' font ',15'
+set ylabel 'E_{/Symbol g}^{2} dN/dE_{/Symbol g} (erg cm^{-2} s^{-1})' font ',15' 
+set xlabel 'E_{/Symbol g} (TeV)' font ',15'
+set arrow 1 nohead from 5E-12,1E-10 to 5E-12,3E-9
+set xtics font ',15'
+set ytics font ',15'
+set key font ',15'
+set term postscript enhanced color
+set output 'SanoDorcelecHESS.ps'
+f(x)=(x>0.5E-9 && x<9E-9)? 1.6*1.56E-17*(x/1.6)**(-0.5):1/0
+g(x)=(x>0.5E-9 && x<9E-9)? 1.6*8.96E-16*(x/1.6)**(-0.3):1/0
+h(x)=(x>0.5E-9 && x<9E-9)? 1.6*2.66E-19*(x/1.6)**(-0.7):1/0
+
+i(x)=(x>0.2E-3 && x<200E-3)? 1.6*9.53E-13*x**(-0.05):1/0
+j(x)=(x>0.2E-3 && x<200E-3)? 1.6*7.62E-13*x**(-0.05):1/0
+k(x)=(x>0.2E-3 && x<200E-3)? 1.6*4.37E-13*x**(-0.15):1/0
+l(x)=(x>0.2E-3 && x<200E-3)? 1.6*5.46E-13*x**(-0.15):1/0
+
+ismin(x1,x2,x3,x4)=(x1<x2 && x1<x3 && x1<x4  ? x1: x2<x1 && x2<x3 && x2<x4  ? x2: x3<x1 && x3<x2 && x3<x4 ? x3: x4<x1 && x4<x2 && x4<x3 ? x4:1/0)
+
+ismax(x1,x2,x3,x4)=(x1>x2 && x1>x3 && x1>x4  ? x1: x2>x1 && x2>x3 && x2>x4  ? x2: x3>x1 && x3>x2 && x3>x4 ? x3: x4>x1 && x4>x2 && x4>x3 ? x4:1/0)
+
+plot  '+' using 1:(g(\$1)):(h(\$1)) w filledcurves ls 7 title 'Suzaku', '+' using 1:(ismin(i(\$1),j(\$1),k(\$1),l(\$1))):(ismax(i(\$1),j(\$1),k(\$1),l(\$1))) w filledcurves ls 2 title 'Fermi E1+E3', 'DorC.txt' u 1:(\$2*\$1*\$1):(\$3*\$1*\$1):(\$4*\$1*\$1) with yerrorbars title 'DorC HESS' ls 2,  'OUTPUT/Sanopaperelectron_syncprimary.txt' u 1:6 w lines ls 1 title 'Synchrotron',  'OUTPUT/Sanopaperelectron_ICprimary.txt' u 1:6 w lines ls 3 title 'IC CMB',  'OUTPUT/Sanopaperelectron_ICRprimary.txt' u 1:6 w lines title 'IC IR1' ls 4, 'OUTPUT/Sanopaperelectron_ICOprimary.txt' u 1:6 w lines ls 5 title 'IC IR2', '< paste OUTPUT/Sanopaperelectron_ICprimary.txt OUTPUT/Sanopaperelectron_ICRprimary.txt  OUTPUT/Sanopaperelectron_ICOprimary.txt' u 1:(\$6 +\$12 +\$18) w lines ls 2 title 'IC total', 'OUTPUT/newdatapaperdorc.txt' u 1:2 w lines ls 8 title 'Bremsstrahlung', 
+
+
+#'OUTPUT/Sanopaperelectron_bremssprimary.txt' u 1:6 w lines ls 6 title 'Bremsstrahlung'
+#'DorC.txt' u 1:(valid(3)? 1/0: \$2*\$1*\$1):(0):(-0.8*\$2*\$1*\$1) w vector title '' ls 1, "<echo '3E-3 7.64E-13 1E-3 1E-2 0' " u 1:2:3:4:(\$2):(\$2) w xyerrorbars notitle ls 2, '' u 1:(\$2):(0):(-0.65*\$2) w vectors notitle ls 2
+#'OUTPUT/Sanopaperelectron_bremssprimary.txt' u 1:6 w lines ls 8 title 'Bremsstrahlung'
+#'OUTPUT/newdata.txt' u 1:2 w lines ls 8 title 'Core MC3 Bremsstrahlung'
+EOF

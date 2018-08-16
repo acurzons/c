@@ -1,0 +1,175 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <math.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+//#include <gsl/gsl_sf_gamma.h>
+
+float lineofbestfit(float x[], float y[], float yerr[], int N, float* a, float* b, float* aerr, float* berr, float* covab){
+
+  float S = 0.0, Sx = 0.0, Sy = 0.0, Sxx = 0.0, Sxy = 0.0;
+  float delta;
+  int i;
+
+  for(i=0;i<N;i++){
+      S += pow(yerr[i], -2.0);
+      Sx += x[i] * pow(yerr[i], -2.0);
+      Sy += y[i] * pow(yerr[i], -2.0);
+      Sxx += pow(x[i], 2.0) * pow(yerr[i], -2.0);
+      Sxy += x[i] * y[i] * pow(yerr[i], -2.0);
+  }   
+
+ delta = S*Sxx - pow(Sx,2);
+ *a = (Sxx * Sy - Sx * Sxy)/delta;
+ *b = (S * Sxy - Sx * Sy)/delta;
+ *aerr = pow(pow(Sxx/delta, 0.5), -0.5);
+ *berr = pow(pow(S/delta, 0.5), -0.5);
+ *covab = pow(pow(fabs(-Sx/delta), -0.5),0.5);
+ 
+ return 0;
+
+}
+
+float pearsons(float x[], float y[], int N){
+
+  float r = 0.0;
+  float xms = 0.0, yms = 0.0;
+  float xave = 0.0, yave = 0.0;
+  int i;
+  
+  for(i=0;i<N;i++){
+    xave += x[i];
+    yave += y[i];
+  }
+  xave /= N;
+  yave /= N;
+
+  for(i=0;i<N;i++){
+    xms += pow(x[i] - xave,2);
+    yms += pow(y[i] - yave,2);
+  }
+
+  for(i=0;i<N;i++) r += (x[i] - xave) * (y[i] - yave) / pow(xms * yms, 0.5);
+
+  return r;
+
+}
+
+float chisquare(float x[], float y[], float yerr[], float a, float b, int N, float* chi, float* Q){
+
+  float chisquare = 0.0;
+  int i;
+
+  for(i=0;i<N;i++) chisquare += pow((y[i] - a - b*x[i])/yerr[i], 2);
+  *chi = chisquare;
+  //*Q = gsl_sf_gamma_inc_Q((N-2)/2, chisquare/2);
+
+  return 0;
+
+}
+
+int main(){
+
+  FILE *ifile;
+  FILE *tmp;
+  FILE *ofile;
+  char ifolder[100], ifilename[100], line[100], command[100], buffer[100];
+  char ofilename1[100], ofilename2[100];
+  int reg = 29;
+  int i, j, N, xerrortype=0, yerrortype=0, column=0;
+  float *x[reg], *y[reg], *z[reg], *xerr[reg], *yerr[reg];  
+  float sigmax, sigmay;
+  float a[reg], b[reg]; 
+  float berr[reg], aerr[reg], covab[reg];
+  float r[reg];
+  float chi[reg], Q[reg]; 
+
+
+
+  printf("Folder name?\n");
+  fgets(ifolder, sizeof(ifolder), stdin);  //user enters folder name
+  ifolder[strcspn(ifolder, "\n")] = 0; //remove newline retained by fgets
+  //  printf("folder is:%s\n",folder);
+
+  //left or right column use as x data?
+  printf("What column to as x data?\n 1.Left\n 2.Right\n");
+  scanf("%d", &column);
+
+  // ask user about errors
+  printf("What is the error in x?\n 1.sqrt(x)\n 2.constant sigma(enter value)\n");
+  scanf("%d", &xerrortype);
+  if(xerrortype == 2){
+    printf("Enter value for sigma:\n");
+    scanf("%f",&sigmax);
+    for(i=0;i<29;i++) xerr[i] = &sigmax;
+  }
+  printf("What is the error in y?\n 1.sqrt(x)\n 2.constant sigma(enter value)\n");
+  scanf("%d", &yerrortype);
+  if(yerrortype == 2){
+    printf("Enter value for sigma:\n");
+    scanf("%f",&sigmay);
+    for(i=0;i<29;i++) yerr[i] = &sigmay;
+  }
+
+  //open the output data file 
+  printf("Output file name?\n");
+  scanf("%s", ofilename1);
+  sprintf(ofilename2, "correlation_study_data/%s.txt", ofilename1);
+  ofile = fopen(ofilename2, "w+");
+
+  for(i=0;i<reg;i++){
+
+    //print each file name to a variable string
+    sprintf(ifilename, "%sreg%d.txt", ifolder, i+1);
+   
+    //open a temporary file to write the number of data points in each data file
+    tmp = fopen("tmp.txt", "r"); //
+    sprintf(command, "cat %s | wc -l > tmp.txt", ifilename);
+    system(command);
+    fscanf(tmp, "%d", &N);
+    N = N - 1; //remove title line
+    fclose(tmp);
+    //open data file
+    ifile = fopen(ifilename, "r");
+ 
+    //allocate memory to each correlation variable according to number of data points
+    x[i] = malloc(sizeof(float) * N);
+    y[i] = malloc(sizeof(float) * N);
+    if(xerrortype==1) xerr[i] = malloc(sizeof(float) * N);
+    if(yerrortype==1) yerr[i] = malloc(sizeof(float) * N);
+    z[i] = malloc(sizeof(float) * N);
+
+    //read in the data and calculate errors and line of best fit pre-parameters
+    fgets(buffer, sizeof(buffer), ifile); //grab the first line of data
+    for(j=0;j<N;j++){
+      fgets(line, sizeof(line), ifile);
+      if(column==1) sscanf(line, "%f %f %f", &x[i][j], &y[i][j], &z[i][j]);
+      if(column==2) sscanf(line, "%f %f %f", &y[i][j], &x[i][j], &z[i][j]);
+      
+      if(xerrortype==1) xerr[i][j] = pow(x[i][j],0.5);
+      if(yerrortype==1) yerr[i][j] = pow(y[i][j],0.5);
+      yerr[i][j] = 1 / pow(yerr[i][j],0.5);
+      
+    } 
+    //close the input data file
+    fclose(ifile);
+
+    //Calculate line of best fit parameters
+    lineofbestfit(x[i], y[i], yerr[i], N, &a[i], &b[i], &aerr[i], &berr[i], &covab[i]);
+
+    //calculate pearsons coefficient, chi square and Q value
+    r[i] = pearsons(x[i], y[i], N);
+    chisquare(x[i], y[i], yerr[i], a[i], b[i], N, &chi[i], &Q[i]); 
+
+    //write the output data to ofile and terminal
+    printf("Reg. %d, a = %.3f, b = %.3f, siga = %.2f, sigb = %.2f, covab = %.2f, r = %.2f\n", i+1, a[i], b[i], aerr[i], berr[i], covab[i], r[i]);
+    fprintf(ofile, "%.3f %.3f %.3f %.3f %.3f %.3f %.3f\n", b[i], a[i], berr[i], aerr[i], r[i], chi[i], covab[i]);
+
+ }
+  fclose(ofile);
+
+  return 0;
+
+}
+

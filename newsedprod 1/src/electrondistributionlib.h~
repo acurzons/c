@@ -1,0 +1,14 @@
+/*library for the electrondistribution functions*/
+float *getgamma1andGMINcontinuouselectron();
+float *electronGMINGMAX();
+void constantelectrondistribution();
+void diracelectrondistribution();
+float normalisationelectroncontinuous(float time);
+float  pulsarenergy (float time);
+float normalisationelectronimpulsive();
+float normalisationelectrondirac();
+void evolutionelectroncontinuous();
+float getinitialcontinuouselectrondistribution(float gamma,float tau);
+float getescapeelectroncontinuous(float gamma,float tau);
+void evolutionelectronimpulsive();
+float getinitialimpulsiveelectrondistribution(float gamma);

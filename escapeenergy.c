@@ -1,0 +1,75 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "string.h"
+#include "../newsedprod/src/constant.h"
+
+int main(){
+
+  FILE *fp;
+  char* filename = "rxj1713_regional_hadronic_parameters.txt";
+  char buffer[100];
+  int num;
+
+  int i, j;
+  double step = 5.0;
+
+  int particle = 0;
+  double mass = protonmassTeV;
+  double E, dE;
+  double A1, A2;
+  double integral1 = 0.0;
+  double integral2 = 0.0;
+  double N_H;
+  double n_H[29];
+  double W1TeV;
+  double Wpred[29];
+  double Wtot[29];
+  double Ecut[29];
+  double W[29];
+  double W2[29];
+  double alpha1[29];
+  double alpha2 = 0.0;
+  double Ebreak = 0.0;
+  double Emax = 10000;
+  double Eescape = 150;
+
+  fp = fopen(filename, "r");
+  fgets(buffer, 100, fp);
+
+  for(j=0;j<29;j++){
+    fscanf(fp, "%d %lf %lf %lf %lf %lf %lf %lf",&num,&N_H,&n_H[j],&Wtot[j],&W1TeV,&alpha1[j],&Ecut[j],&Wpred[j]);
+    //   printf("Region %d has params %lf %lf %lf %lf %lf \n", num, n_H[j], Wtot[j], W1TeV, alpha1[j], Ecut[j]);
+    Wtot[j] *= 1e46;
+    Wpred[j] *= 1e48;
+    integral1 = 0.0;
+    integral2 = 0.0;
+
+    for(i=0;i<250;i++){
+      E = 1e-7 * pow(10,(double)(i*step)/100.0);
+      dE = E * (pow(10,(double)(step)/100.0) - 1.0);
+      if((E>mass) & (E<Emax)){
+	integral1 += pow(E,1) * pow(E,-alpha1[j]) * exp(-(E/Ecut[j])) * dE;
+	integral2 += pow(E,-1) * exp(-(E/Ecut[j])) * dE;
+      }
+    }
+
+    A1 = Wpred[j]/integral1;
+    A2 = Wpred[j]/integral2;
+   
+    for(i=0;i<250;i++){
+      E = 1e-7*pow(10,(double)(i*step)/100.0);
+      dE = E * (pow(10,(step)/100.0) - 1.0);
+      if((E>mass) & (E<Eescape)){
+	W[j] += A1 * pow(E,1) * pow(E,-alpha1[j]) * exp(-(E/Ecut[j])) * dE;
+	W2[j] += A2 * pow(E,-2) * exp(-(E/Ecut[j])) * dE;
+      }
+    }
+    printf("Region %d has W = %.3e and Wsimple = %.3e\n", num, W[j], W2[j]);
+  }
+  
+  
+  fclose(fp);
+  return(0);
+
+}

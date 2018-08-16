@@ -1,0 +1,6 @@
+brakingindex=2.51
+period=33.4
+dotPeriod=4.2E-13
+magfraction=0.03
+ejectaMass=9.5
+E_SN=1E51
